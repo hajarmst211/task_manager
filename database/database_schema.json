@@ -1,0 +1,43 @@
+
+
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "blocks": {
+      "type": "array",
+      "items": [
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "content": {
+              "type": "string"
+            },
+            "deadline": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "content",
+            "deadline",
+            "type",
+            "status"
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "blocks"
+  ]
+}
