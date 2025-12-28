@@ -13,27 +13,23 @@ CREATE TABLE IF NOT EXISTS blocks(
     tasks TEXT NOT NULL
 );
 
+
 CREATE TABLE IF NOT EXISTS tasks(
     task_id UUID DEFAULT gen_random_uuid(),
     block_id UUID REFERENCES blocks(block_id),
     title TEXT NOT NULL,
-    task_type task_types,
-    task_properties REFERENCES properties(propriety_id),
-    properties JSONB DEFAULT '{}'
+    task_type task_types NOT NULL,
+    is_done BOOLEAN DEFAULT FALSE,
+    status  status_types DEFAULT "not started",
+    properties JSONB DEFAULT '{}'::jsonb
 );
 
-CREATE TABLE IF NOT EXISTS properties(
-    propriety_id UUID DEFAULT gen_random_uuid(),
-    task_id UUID REFERENCES task(task_id),
-    is_done BOOLEAN,
-    status  status_types,
-    deadline DATE
-);
 
 CREATE TABLE IF NOT EXISTS tags(
     tag_id UUID DEFAULT gen_random_uuid(),
     label TEXT NOT NULL
 );
+
 
 CREATE TABLE IF NOT EXISTS task_tags(
     tag_id UUID REFERENCES tags(tag_id),
