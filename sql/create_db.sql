@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS tasks(
     task_type task_types NOT NULL,
     is_done BOOLEAN DEFAULT FALSE,
     status  status_types DEFAULT 'not started',
+    priority priorities DEFAULT 'medium',
     properties JSONB DEFAULT '{}'::jsonb
 );
 
