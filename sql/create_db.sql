@@ -8,9 +8,9 @@ CREATE TYPE task_types AS ENUM ('to do list', 'text', 'date');
 
 
 CREATE TABLE IF NOT EXISTS blocks(
-    block_id UUID DEFAULT gen_random_uuid(),
-    parent_id UUID REFERENCES block(block_id) ON DELETE CASCADE,
-    tasks TEXT NOT NULL
+    block_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    parent_id UUID REFERENCES blocks(block_id) ON DELETE CASCADE DEFAULT NULL,
+    block_theme VARCHAR(20) NOT NULL
 );
 
 
