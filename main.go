@@ -1,23 +1,36 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"sync"
 	"sync/atomic"
 	"time"
 )
 
-var globalIDCounter int64
 
 type Task struct {
-	ID        int64
+	ID        uint64
 	Title     string
 	isDone    bool
 	createdAt time.Time
 	Deadline  time.Time
 }
 
-func createTask(title string, deadlineStr string) Task {
-	newID := atomic.AddInt64(&globalIDCounter, 1)
+type TaskManager struct {
+	mu sync.Mutex
+	tasksMap map[uint64]Task 
+	nextID uint64 
+}
+
+func newTaskManager() *TaskManager{
+	return &TaskManager{
+		tasksMap: make(map[uint64]Task),
+		nextID: 1,
+	}
+}
+
+func newTask(ID uint64, title string, deadlineStr string) (Task, error) {
 	isDone := false
 	createdAt := time.Now()
 
@@ -25,43 +38,55 @@ func createTask(title string, deadlineStr string) Task {
 	parsedDeadline, err := time.Parse(layout, deadlineStr)
 
 	if err != nil {
-		fmt.Println("Error parsing time:", err)
-		return Task{}
+		return Task{}, err
 	}
 
 	if parsedDeadline.Before(createdAt) {
-		fmt.Println("The deadline is before than today, change that")
-		return Task{}
+		return Task{}, errors.New("deadline cannot be past")
+
 	}
 
-	newTask := Task{newID, title, isDone, createdAt, parsedDeadline}
+	newTask := Task{ID, title, isDone, createdAt, parsedDeadline}
 
-	return newTask
+	return newTask, nil
 }
 
-func addTask(task Task, TasksHash map[int64]Task) {
-	if _, isPresent := TasksHash[task.ID]; isPresent {
-		fmt.Println("A task with this id exists already, try again!")
-	} else {
-		TasksHash[task.ID] = task
+
+func (taskManager *TaskManager) addTask(title string, deadlineStr string) error {
+	TasksHash := taskManager.tasksMap
+	newID := taskManager.nextID
+	
+	taskToAdd, taskError := newTask(uint64(newID), title, deadlineStr)
+	if taskError != nil{
+		return taskError
+	}
+
+	TasksHash[newID] = taskToAdd
+	taskManager.nextID += 1
+	return nil
+}
+
+func (taskManager *TaskManager)deleteTask(ID int64) {
+	TasksHash := taskManager.tasksMap
+	delete(TasksHash, ID)
+}
+
+func (taskManager *TaskManager)printTasks() {
+	TasksHash := taskManager.tasksMap
+	for key, value := range TasksHash {
+		fmt.Printf("The value: %d is: \n	%v", key, value)
 	}
 }
-
-func 
 
 func main() {
-	var TasksHash = make(map[int64]Task)
-	newTask := createTask("finish this planner", "2023-10-27")
+	personnalManager := newTaskManager()
+	finishPlanerTask, error := newTask("finish this planner", "2028-10-27")
 
-	if newTask == (Task{}) {
+	if error == nil {
 		fmt.Println("The task is not created it is empty")
 		return
 	}
 
-	addTask(newTask, TasksHash)
+	personnalManager.addTask(finishPlanerTask)
 
-	fmt.Printf("The task id is: %d \n The title is: %s \n The deadline is: %v \n It was created at: %v \n",
-		newTask.ID, newTask.Title, newTask.Deadline.Format("2025-01-14"), newTask.createdAt.Format("2025-01-14"))
-
-	fmt.Println("the hashmap is:", TasksHash)
 }
