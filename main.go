@@ -1,92 +1,61 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"sync"
-	"sync/atomic"
+	"taskManager/model"
+	"taskManager/service"
+	"taskManager/ui"
 	"time"
 )
 
+var timeLayout = time.DateOnly
 
-type Task struct {
-	ID        uint64
-	Title     string
-	isDone    bool
-	createdAt time.Time
-	Deadline  time.Time
-}
-
-type TaskManager struct {
-	mu sync.Mutex
-	tasksMap map[uint64]Task 
-	nextID uint64 
-}
-
-func newTaskManager() *TaskManager{
-	return &TaskManager{
-		tasksMap: make(map[uint64]Task),
-		nextID: 1,
+func printTask(task model.Task) string {
+	status := "not done"
+	if task.IsDone {
+		status = "done"
 	}
+	return fmt.Sprintf("ID: %d, Title: %s, status: %s, deadline: %s", task.ID, task.Title, status, task.Deadline.Format(timeLayout))
+
 }
 
-func newTask(ID uint64, title string, deadlineStr string) (Task, error) {
-	isDone := false
-	createdAt := time.Now()
-
-	layout := time.DateOnly
-	parsedDeadline, err := time.Parse(layout, deadlineStr)
-
-	if err != nil {
-		return Task{}, err
+func printTasks(taskManager *service.TaskManager) {
+	taskManager.Mu.RLock()
+	TasksHash := taskManager.TasksMap
+	if len(TasksHash) == 0 {
+		fmt.Println("No task available")
+		return
 	}
 
-	if parsedDeadline.Before(createdAt) {
-		return Task{}, errors.New("deadline cannot be past")
-
+	fmt.Println("----Current tasks are:")
+	for _, task := range TasksHash {
+		fmt.Println(printTask(task))
 	}
-
-	newTask := Task{ID, title, isDone, createdAt, parsedDeadline}
-
-	return newTask, nil
+	fmt.Println("----done printing")
+	taskManager.Mu.Unlock()
 }
 
-
-func (taskManager *TaskManager) addTask(title string, deadlineStr string) error {
-	TasksHash := taskManager.tasksMap
-	newID := taskManager.nextID
-	
-	taskToAdd, taskError := newTask(uint64(newID), title, deadlineStr)
-	if taskError != nil{
-		return taskError
-	}
-
-	TasksHash[newID] = taskToAdd
-	taskManager.nextID += 1
-	return nil
-}
-
-func (taskManager *TaskManager)deleteTask(ID int64) {
-	TasksHash := taskManager.tasksMap
-	delete(TasksHash, ID)
-}
-
-func (taskManager *TaskManager)printTasks() {
-	TasksHash := taskManager.tasksMap
-	for key, value := range TasksHash {
-		fmt.Printf("The value: %d is: \n	%v", key, value)
+func PritnTodayDeadline(taskManager *service.TaskManager) {
+	tasks := taskManager.GetTodayDeadline()
+	for _, task := range tasks {
+		printTask(task)
 	}
 }
 
 func main() {
-	personnalManager := newTaskManager()
-	finishPlanerTask, error := newTask("finish this planner", "2028-10-27")
+	personnalManager := service.NewTaskManager()
 
-	if error == nil {
-		fmt.Println("The task is not created it is empty")
+	addingTaskError := personnalManager.AddTask("finish manager", "2026-05-02")
+	if addingTaskError != nil {
+		fmt.Print(addingTaskError)
 		return
 	}
 
-	personnalManager.addTask(finishPlanerTask)
+	fmt.Printf("The personnal manager tasksmap is: %v\n", personnalManager.TasksMap)
+
+	personnalManager.UpdateDeadlineTitle("finish manager", "2027-04-05")
+
+	choice := ui.MainMenu()
+	fmt.Println("Le choix est", choice)
 
 }
