@@ -1,24 +1,17 @@
 package main
 
 import (
+	"taskManager/model"
+	"time"
 	"fmt"
-	"taskManager/service"
-	"taskManager/ui"
 )
-
 func main() {
-	personnalManager := service.NewTaskManager()
-
-	addingTaskError := personnalManager.AddTask("finish manager", "2026-05-02")
-	if addingTaskError != nil {
-		fmt.Print(addingTaskError)
-		return
+	layout := "2006-01-02"
+	deadline,_ := time.Parse(layout, "2025-05-01")
+	createdAT, _:= time.Parse(layout, "2025-05-01")
+	newTask, err := task.NewTask("finish planner", false, createdAT, deadline)
+	if err != nil{
+		fmt.Println(err)
 	}
-
-	fmt.Printf("The personnal manager tasksmap is: %v\n", personnalManager.TasksMap)
-
-	personnalManager.UpdateDeadlineTitle("finish manager", "2027-04-05")
-
-	choice := ui.MainMenu()
-	ui.MenuHandler(choice, personnalManager)
+	fmt.Println(newTask)
 }
