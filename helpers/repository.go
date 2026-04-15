@@ -7,6 +7,7 @@ import (
 	"taskManager/model"
 	"text/tabwriter"
 	"time"
+	"io"
 )
 
 const jsonPath = "tasks.json"
@@ -32,6 +33,10 @@ func LoadTasks() ([]model.Task, error) {
 	var tasks []model.Task
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&tasks)
+
+	if err == io.EOF{
+		return []model.Task{}, nil
+	}
 
 	return tasks, err
 }
@@ -166,6 +171,58 @@ func PrintTasks() {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 
 	// Header
+	fmt.Fprintln(w, "STATUS\tID\tTITLE\tDEADLINE\tCREATED")
+	fmt.Fprintln(w, "------\t--\t-----\t--------\t-------")
+
+	for _, t := range tasks {
+		status := "[ ]"
+		if t.Done {
+			status = "[X]"
+		}
+
+		fmt.Fprintf(w, "%s\t%d\t%s\t%s\t%s\n",
+			status,
+			t.ID,
+			t.Title,
+			t.Deadline.Format("2006-01-02"),
+			t.CreatedAt.Format("2006-01-02"),
+		)
+	}
+	w.Flush()
+}
+
+
+func TodayTasks() ([]model.Task, error){
+	tasks, err := LoadTasks()
+	if err != nil{
+		return []model.Task{}, fmt.Errorf("Failed loading the tasks: %w", err)
+	} 
+
+	if len(tasks) <= 0{
+		return []model.Task{}, fmt.Errorf("Tasks list is empty!")
+	}
+
+	today := time.Now().Truncate(24 * time.Hour)
+	var todayTasks []model.Task
+	
+	for _,task := range tasks{
+		if task.Deadline.Equal(today){
+			todayTasks = append(todayTasks, task)
+		}
+	}
+
+	return todayTasks, nil
+}
+
+
+func PrintNTasks(tasks []model.Task) {
+	if len(tasks) == 0 {
+		fmt.Println("No tasks found. Your todo list is empty!")
+		return
+	}
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+
 	fmt.Fprintln(w, "STATUS\tID\tTITLE\tDEADLINE\tCREATED")
 	fmt.Fprintln(w, "------\t--\t-----\t--------\t-------")
 

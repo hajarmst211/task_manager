@@ -98,7 +98,6 @@ func MarkDoneMenu() error {
 
 func AddTaskMenu() error {
 	fmt.Println("Enter informations about the task to create:")
-
 	scanner := bufio.NewScanner(os.Stdin)
 	var title string
 
@@ -112,14 +111,19 @@ func AddTaskMenu() error {
 		fmt.Println("Title cannot be empty!")
 	}
 
-	var parsedDeadline time.Time
+	var parsedDeadline time.Time 
 	for {
-		today := time.Now().Truncate(24 * time.Hour)
-		fmt.Printf("Today is: %s. Enter the deadline:", today)
+		now := time.Now()
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		
+		fmt.Printf("Today is: %s. Enter the deadline (YYYY-MM-DD): ", today.Format("2006-01-02"))
 		scanner.Scan()
-		deadline := scanner.Text()
+		deadlineInput := scanner.Text()
 
-		parsedDeadline, err := DateParser(deadline)
+
+		var err error
+		parsedDeadline, err = time.ParseInLocation("2006-01-02", deadlineInput, time.Local)
+		
 		if err != nil {
 			fmt.Println("Invalid format! Please use YYYY-MM-DD.")
 			continue
@@ -144,10 +148,10 @@ func AddTaskMenu() error {
 	}
 
 	err = AddTask(newTask)
-
 	if err != nil {
-		return fmt.Errorf("Error adding the task:%w", err)
+		return fmt.Errorf("Error adding the task: %w", err)
 	}
-	fmt.Printf("task was added succefully! \n make sure YOU DO IT!\n")
+
+	fmt.Printf("Task was added successfully!\n")
 	return nil
 }
